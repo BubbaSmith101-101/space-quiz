@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#111522">
+  <title>Orbit — Space exploration quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0c101b; --card: #151b2a; --surface: #1b2334; --text: #f0f3ff;
+      --muted: #9ba8c2; --line: #2b354b; --accent: #aa9bff; --accent-text: #18132e;
+      --green: #70e3ad; --green-bg: #16392f; --red: #ff959d; --red-bg: #3c232d;
+      --star: #d6dfff80;
+      font: 15px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        color-scheme: light;
+        --bg: #f3f4fa; --card: #ffffff; --surface: #f6f7fc; --text: #20243a;
+        --muted: #626d85; --line: #dce0ee; --accent: #6951d8; --accent-text: #ffffff;
+        --green: #16764c; --green-bg: #e8f7ef; --red: #bd3349; --red-bg: #ffedf0;
+        --star: #665b9480;
+      }
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0; min-height: 100svh; padding: 46px 22px 30px;
+      background: radial-gradient(ellipse at 50% 0, #8671ee12, transparent 65%), var(--bg);
+      color: var(--text);
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .65;
+      background-image: radial-gradient(circle, var(--star) 1px, transparent 1.5px),
+        radial-gradient(circle, var(--star) 1px, transparent 1.5px),
+        radial-gradient(circle, var(--star) .7px, transparent 1.2px);
+      background-size: 173px 197px, 257px 229px, 211px 281px;
+      background-position: 12px 37px, 89px 91px, 45px 155px;
+    }
+    button { font: inherit; scroll-margin-block: 24px; }
+    button:focus-visible, h2[tabindex="-1"]:focus-visible {
+      outline: 3px solid var(--accent); outline-offset: 4px;
+      box-shadow: 0 0 0 4px var(--card);
+    }
+    h2[tabindex="-1"] { border-radius: 4px; scroll-margin-block: 24px; }
+    .app { position: relative; width: min(100%, 480px); margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; }
+    .brand { display: flex; align-items: center; gap: 9px; font-size: 20px; font-weight: 750; letter-spacing: -.7px; }
+    .brand svg { width: 30px; height: 30px; color: var(--accent); }
+    .edition { color: var(--muted); font-size: 11px; letter-spacing: 1.8px; }
+    .hero { margin-bottom: 28px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--card); }
+    .mission-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 11px 18px; border-bottom: 1px solid var(--line); background: var(--surface); }
+    .mission-code, .mission-status, .mission-data { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; }
+    .mission-code { color: var(--muted); letter-spacing: 1px; }
+    .mission-status { display: inline-flex; align-items: center; gap: 7px; color: var(--green); }
+    .mission-display { position: relative; display: grid; place-items: center; height: 142px; margin: 0 18px; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 28px 28px; border-bottom: 1px solid var(--line); }
+    .mission-display::before { content: ""; position: absolute; width: 120px; height: 120px; border: 1px solid var(--accent); border-radius: 50%; opacity: .4; }
+    .mission-display::after { content: ""; position: absolute; inset: 12px 0; border-left: 2px solid var(--accent); border-right: 2px solid var(--accent); opacity: .5; pointer-events: none; }
+    .planet { position: relative; width: 116px; height: 96px; }
+    .mission-brief { padding: 19px 20px 21px; text-align: center; }
+    .hero h1 { font-size: clamp(26px, 6vw, 32px); }
+    .hero .eyebrow { font-size: 10px; letter-spacing: 1.6px; }
+    .mission-data { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--line); background: var(--surface); }
+    .mission-data > div { padding: 12px 6px; text-align: center; }
+    .mission-data > div + div { border-left: 1px solid var(--line); }
+    .mission-data dt { color: var(--muted); font-size: 10px; letter-spacing: .8px; text-transform: uppercase; }
+    .mission-data dd { margin: 3px 0 0; color: var(--text); font-weight: 650; }
+    .eyebrow { color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: 2px; text-transform: uppercase; }
+    h1 { margin: 7px 0 7px; font-size: clamp(29px, 7vw, 36px); letter-spacing: -1.2px; line-height: 1.2; }
+    .hero p { color: var(--muted); margin: 0; }
+    .card { padding: 25px; border: 1px solid var(--line); background: var(--card); border-radius: 22px; box-shadow: 0 20px 70px #00000012; }
+    .stats { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .stats strong { color: var(--text); font-weight: 650; }
+    .score { border: 1px solid var(--line); background: var(--surface); padding: 4px 10px; border-radius: 20px; }
+    .score span { color: var(--accent); margin-right: 5px; }
+    .track { height: 5px; background: var(--line); border-radius: 5px; margin: 15px 0 25px; overflow: hidden; }
+    .fill { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #8270ed, #bba8ff); transition: width .45s ease; }
+    .category { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; }
+    h2 { font-size: 22px; line-height: 1.4; letter-spacing: -.45px; margin: 8px 0 8px; }
+    .hint { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+    .answers { display: grid; gap: 10px; }
+    .answer {
+      display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+      padding: 12px 14px; min-height: 53px; border: 1px solid var(--line); border-radius: 11px;
+      background: var(--surface); color: var(--text); cursor: pointer; transition: background .2s, border-color .2s, transform .2s;
+    }
+    .answer:not(:disabled):hover { border-color: var(--accent); transform: translateX(3px); }
+    .answer:not(:disabled):focus-visible { border-color: var(--accent); transform: none; }
+    .answer:focus-visible .letter { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+    .letter { display: grid; place-items: center; width: 26px; height: 26px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 11px; font-weight: 650; }
+    .answer:disabled { cursor: default; opacity: .52; }
+    .answer.correct { border-color: var(--green); color: var(--green); background: var(--green-bg); opacity: 1; animation: pop .4s ease; }
+    .answer.wrong { border-color: var(--red); color: var(--red); background: var(--red-bg); opacity: 1; animation: shake .45s ease; }
+    .correct .letter { color: var(--green); border-color: var(--green); }
+    .wrong .letter { color: var(--red); border-color: var(--red); }
+    .feedback { border-radius: 11px; background: var(--green-bg); color: var(--green); padding: 13px 15px; margin-top: 16px; font-size: 13px; animation: reveal .3s ease; }
+    .feedback.incorrect { background: var(--red-bg); color: var(--red); }
+    .feedback strong { display: block; margin-bottom: 3px; }
+    .primary { width: 100%; border: 0; border-radius: 11px; padding: 13px 18px; font-weight: 700; color: var(--accent-text); background: var(--accent); cursor: pointer; transition: filter .2s, transform .2s; }
+    .primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .primary:focus-visible { filter: none; transform: none; }
+    .primary:disabled { cursor: default; background: var(--surface); color: var(--muted); transform: none; filter: none; }
+    .next { margin-top: 20px; }
+    .card-footer { text-align: center; font-size: 11px; color: var(--muted); margin: 12px 0 0; }
+    footer { display: flex; justify-content: center; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; margin-top: 22px; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+    .results { text-align: center; animation: reveal .45s ease; }
+    .reaction-stage { position: relative; display: inline-block; }
+    .reaction { position: relative; font-size: 58px; line-height: 1.3; margin: 5px 0 17px; }
+    .celebration { position: absolute; inset: -10px -50px 0; pointer-events: none; background: radial-gradient(circle, #a999ff30, transparent 70%); }
+    .celebration::before { content: ""; position: absolute; inset: 5px 30px 10px; border: 1px solid var(--accent); border-radius: 50%; opacity: .4; transform: rotate(-20deg); }
+    .celebration span { position: absolute; color: var(--accent); font-size: 19px; line-height: 1; }
+    .celebration span:nth-child(1) { top: 9%; left: 10%; }
+    .celebration span:nth-child(2) { top: 54%; left: 0; color: var(--green); font-size: 13px; }
+    .celebration span:nth-child(3) { top: 2%; right: 12%; color: var(--green); font-size: 14px; }
+    .celebration span:nth-child(4) { top: 52%; right: 0; }
+    .celebration span:nth-child(5) { bottom: 3%; right: 18%; font-size: 12px; }
+    .celebration span:nth-child(6) { bottom: 6%; left: 19%; font-size: 12px; }
+    .mission-award { display: inline-block; margin: 6px 0 0; padding: 5px 12px; border: 1px solid var(--accent); border-radius: 20px; color: var(--accent); background: var(--surface); font-size: 11px; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; }
+    .results h2 { font-size: 28px; }
+    .result-copy { color: var(--muted); margin: 8px 0 22px; }
+    .result-score { font-size: 62px; font-weight: 800; letter-spacing: -3px; color: var(--accent); line-height: 1.2; margin-top: 20px; }
+    .result-score small { font-size: 24px; color: var(--muted); font-weight: 500; letter-spacing: -1px; }
+    .result-label { color: var(--muted); font-size: 12px; margin: 5px 0 22px; }
+    .result-details { display: flex; justify-content: center; gap: 28px; border-top: 1px solid var(--line); padding-top: 20px; margin: 0 0 24px; font-size: 12px; color: var(--muted); }
+    .result-details strong { display: block; font-size: 20px; color: var(--text); }
+    .question-content { animation: reveal .3s ease; }
+    @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+    @keyframes pop { 50% { transform: scale(1.025); box-shadow: 0 0 20px #70e3ad20; } }
+    @keyframes reveal { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes twinkle { from { opacity: .45; } to { opacity: .8; } }
+    @keyframes celebrate { from { opacity: 0; transform: scale(.65) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+    @media (prefers-reduced-motion: no-preference) {
+      body::before { animation: twinkle 8s ease-in-out infinite alternate; }
+      .celebration { animation: celebrate .7s ease-out both; }
+    }
+    @media (max-width: 400px) { body { padding: 24px 16px; } header { margin-bottom: 26px; } .card { padding: 20px; } h2 { font-size: 20px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <svg viewBox="0 0 36 36" fill="none" aria-hidden="true"><circle cx="18" cy="18" r="8" stroke="currentColor" stroke-width="1.8"/><ellipse cx="18" cy="18" rx="17" ry="6" transform="rotate(-35 18 18)" stroke="currentColor" stroke-width="1.8"/><circle cx="28" cy="7" r="2" fill="currentColor"/></svg>
+        orbit<span style="color:var(--accent)">.</span>
+      </div>
+      <span class="edition">THE EXPLORER SERIES</span>
+    </header>
+    <section class="hero" aria-labelledby="title">
+      <div class="mission-bar">
+        <span class="mission-code">MISSION CONTROL / 001</span>
+        <span class="mission-status"><span class="dot" aria-hidden="true"></span>Ready to explore</span>
+      </div>
+      <div class="mission-display" aria-hidden="true">
+      <svg class="planet" viewBox="0 0 140 116" fill="none">
+        <defs><linearGradient id="planet" x1="40" y1="20" x2="105" y2="100" gradientUnits="userSpaceOnUse"><stop stop-color="#c5b7ff"/><stop offset=".5" stop-color="#8e79e9"/><stop offset="1" stop-color="#4c3a9a"/></linearGradient></defs>
+        <path d="M17 25v8m-4-4h8M119 77v8m-4-4h8" stroke="#ad9df6" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="113" cy="22" r="2" fill="#bba9fa"/><circle cx="24" cy="83" r="1.5" fill="#8e79e9"/>
+        <ellipse cx="70" cy="62" rx="62" ry="14" transform="rotate(-25 70 62)" stroke="#ae9bf5" stroke-width="6"/>
+        <circle cx="70" cy="55" r="35" fill="url(#planet)"/>
+        <path d="M43 35c14 8 28 9 44 5M37 50c19 10 40 11 65 4M43 70c15 6 33 7 52 2" stroke="#e0d7ff" stroke-opacity=".16" stroke-width="7"/>
+        <path d="M14 78c4 11 34 8 65-7 29-13 49-30 47-40" stroke="#c6b5ff" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      </div>
+      <div class="mission-brief">
+        <div class="eyebrow">Explorer briefing</div>
+        <h1 id="title">How far will you go?</h1>
+        <p>10 questions. One cosmic adventure.</p>
+      </div>
+      <dl class="mission-data" aria-label="Mission parameters">
+        <div><dt>Objective</dt><dd>Explore space</dd></div>
+        <div><dt>Checkpoints</dt><dd>10 questions</dd></div>
+        <div><dt>Time limit</dt><dd>None</dd></div>
+      </dl>
+    </section>
+    <section class="card" aria-label="Space exploration quiz">
+      <div id="quiz">
+        <div class="stats">
+          <span>Question <strong id="question-number">01</strong> <span aria-hidden="true">/</span> 10</span>
+          <div class="score"><span aria-hidden="true">&#10022;</span> Score <strong id="score">0</strong></div>
+        </div>
+        <div id="progress" class="track" role="progressbar" aria-label="Questions answered" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0"><div id="fill" class="fill"></div></div>
+        <div id="question-content" class="question-content">
+          <div id="category" class="category"></div>
+          <h2 id="question" tabindex="-1"></h2>
+          <p class="hint">Pick your answer, explorer.</p>
+          <div id="answers" class="answers" role="group" aria-labelledby="question" aria-describedby="keyboard-hint"></div>
+        </div>
+        <div id="feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+        <button id="next" class="primary next" disabled>Next question &rarr;</button>
+        <p id="keyboard-hint" class="card-footer">Keyboard: Tab to move. Enter or Space to select.</p>
+      </div>
+      <div id="results" class="results" hidden>
+        <div class="reaction-stage">
+          <div id="celebration" class="celebration" aria-hidden="true" hidden>
+            <span>&#10022;</span><span>&#10022;</span><span>&#10022;</span><span>&#10022;</span><span>&#10022;</span><span>&#10022;</span>
+          </div>
+          <div id="reaction" class="reaction" aria-hidden="true"></div>
+        </div>
+        <div class="eyebrow">Mission complete</div>
+        <h2 id="result-title" tabindex="-1"></h2>
+        <div id="mission-award" class="mission-award" hidden>Mission distinction</div>
+        <p id="result-copy" class="result-copy"></p>
+        <div class="result-score"><span id="final-score"></span><small> / 10</small></div>
+        <p class="result-label">questions answered correctly</p>
+        <div class="result-details"><div><strong id="accuracy"></strong>Accuracy</div><div><strong>10</strong>Discoveries made</div></div>
+        <button id="restart" class="primary">Launch another mission &rarr;</button>
+      </div>
+    </section>
+    <footer><span class="dot" aria-hidden="true"></span> Stay curious. Keep exploring.</footer>
+  </main>
+  <script>
+    "use strict";
+    const questions = [
+      { category: "Our cosmic neighborhood", question: "Which planet is known as the Red Planet?", answers: ["Venus", "Mars", "Jupiter", "Mercury"], correct: 1, fact: "Iron minerals in Mars's soil rust, giving the planet its distinctive red color." },
+      { category: "One giant leap", question: "Who was the first person to walk on the Moon?", answers: ["Yuri Gagarin", "Buzz Aldrin", "Neil Armstrong", "Michael Collins"], correct: 2, fact: "Neil Armstrong stepped onto the Moon on July 20, 1969, during Apollo 11." },
+      { category: "The space age begins", question: "What was the first artificial satellite to orbit Earth?", answers: ["Sputnik 1", "Explorer 1", "Voyager 1", "Hubble"], correct: 0, fact: "The Soviet Union launched Sputnik 1 on October 4, 1957, beginning the space age." },
+      { category: "Gas giants", question: "Which is the largest planet in our solar system?", answers: ["Earth", "Neptune", "Saturn", "Jupiter"], correct: 3, fact: "Jupiter is so large that more than 1,300 Earths could fit inside its volume." },
+      { category: "Life in orbit", question: "Why do astronauts appear to float aboard the International Space Station?", answers: ["There is no gravity in space", "They are in continuous free fall", "Their suits cancel gravity", "The station has no mass"], correct: 1, fact: "The station and its crew fall around Earth together. Earth's gravity still strongly affects them." },
+      { category: "Robotic explorers", question: "Which NASA rover landed on Mars in February 2021?", answers: ["Curiosity", "Opportunity", "Perseverance", "Sojourner"], correct: 2, fact: "Perseverance landed in Jezero Crater to study ancient environments and collect rock samples." },
+      { category: "Beyond the visible", question: "What kind of light does the James Webb Space Telescope primarily observe?", answers: ["Infrared light", "Radio waves", "Gamma rays", "Ultraviolet light"], correct: 0, fact: "Infrared observations help Webb peer through dust and study light from very distant galaxies." },
+      { category: "A world next door", question: "About how long does the Moon take to orbit Earth relative to the stars?", answers: ["24 hours", "7 days", "365 days", "27.3 days"], correct: 3, fact: "The Moon's orbit takes about 27.3 days. Its phase cycle takes longer: about 29.5 days." },
+      { category: "Journey to the edge", question: "Which spacecraft was the first to enter interstellar space?", answers: ["New Horizons", "Voyager 1", "Pioneer 10", "Cassini"], correct: 1, fact: "Voyager 1 crossed the heliopause in 2012, entering the space beyond the Sun's solar-wind bubble." },
+      { category: "The next frontier", question: "Which NASA program aims to return humans to the Moon?", answers: ["Gemini", "Mercury", "Artemis", "Viking"], correct: 2, fact: "Artemis is designed to return astronauts to the Moon and build experience for future Mars missions." }
+    ];
+    const $ = id => document.getElementById(id);
+    let index = 0;
+    let score = 0;
+    let answered = false;
+
+    function renderQuestion(focus = false) {
+      answered = false;
+      const current = questions[index];
+      $("question-number").textContent = String(index + 1).padStart(2, "0");
+      $("score").textContent = score;
+      $("category").textContent = current.category;
+      $("question").textContent = current.question;
+      $("answers").replaceChildren();
+      current.answers.forEach((text, choice) => {
+        const button = document.createElement("button");
+        button.className = "answer";
+        const letter = document.createElement("span");
+        letter.className = "letter";
+        letter.setAttribute("aria-hidden", "true");
+        letter.textContent = String.fromCharCode(65 + choice);
+        const label = document.createElement("span");
+        label.textContent = text;
+        button.append(letter, label);
+        button.addEventListener("click", () => selectAnswer(choice));
+        $("answers").append(button);
+      });
+      $("feedback").hidden = true;
+      $("feedback").replaceChildren();
+      $("next").disabled = true;
+      $("next").textContent = index === questions.length - 1 ? "See my results \u2192" : "Next question \u2192";
+      if (focus) $("question").focus();
+    }
+
+    function selectAnswer(choice) {
+      if (answered) return;
+      answered = true;
+      const current = questions[index];
+      const correct = choice === current.correct;
+      if (correct) score++;
+      $("score").textContent = score;
+      [...$("answers").children].forEach((button, position) => {
+        button.disabled = true;
+        if (position === current.correct) {
+          button.classList.add("correct");
+          button.firstElementChild.textContent = "\u2713";
+          button.setAttribute("aria-label", current.answers[position] + " — correct answer");
+        } else if (position === choice) {
+          button.classList.add("wrong");
+          button.firstElementChild.textContent = "\u2715";
+          button.setAttribute("aria-label", current.answers[position] + " — incorrect answer");
+        }
+      });
+      const title = document.createElement("strong");
+      title.textContent = correct ? "Stellar work! \u2728" : "Not quite — keep exploring!";
+      const explanation = document.createElement("span");
+      explanation.textContent = (correct ? "" : "Correct answer: " + current.answers[current.correct] + ". ") + current.fact;
+      $("feedback").className = correct ? "feedback" : "feedback incorrect";
+      $("feedback").replaceChildren(title, explanation);
+      $("feedback").hidden = false;
+      $("progress").setAttribute("aria-valuenow", index + 1);
+      $("fill").style.width = ((index + 1) / questions.length * 100) + "%";
+      $("next").disabled = false;
+      $("next").focus();
+    }
+
+    function showResults() {
+      $("quiz").hidden = true;
+      $("results").hidden = false;
+      $("celebration").hidden = score < 8;
+      $("mission-award").hidden = score < 8;
+      const reaction = score >= 8
+        ? ["\u{1F680}", "You're a cosmic expert!", "The universe has met its match. Your curiosity is out of this world."]
+        : score >= 5
+          ? ["\u{1F9D1}\u200D\u{1F680}", "A true space explorer!", "A solid mission, with a few new discoveries along the way."]
+          : ["\u{1F30C}", "Your journey is just beginning!", "Every discovery starts with curiosity. Take what you learned on your next mission."];
+      $("reaction").textContent = reaction[0];
+      $("result-title").textContent = reaction[1];
+      $("result-copy").textContent = reaction[2];
+      $("final-score").textContent = score;
+      $("accuracy").textContent = (score / questions.length * 100) + "%";
+      $("result-title").focus();
+    }
+
+    $("next").addEventListener("click", () => {
+      if (!answered) return;
+      if (index === questions.length - 1) showResults();
+      else { index++; renderQuestion(true); }
+    });
+    $("restart").addEventListener("click", () => {
+      index = 0;
+      score = 0;
+      $("results").hidden = true;
+      $("quiz").hidden = false;
+      $("progress").setAttribute("aria-valuenow", "0");
+      $("fill").style.width = "0%";
+      renderQuestion(true);
+    });
+    renderQuestion();
+  </script>
+</body>
+</html>
